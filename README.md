@@ -38,7 +38,7 @@ Uma plataforma digital que centraliza:
 
 ## Licença
 
-Copyright (c) 2025  
+Copyright (c) 2026  
 Renan Jose Silva Santos, Marcela de Oliveira Dorigao,  
 Nicolas Henrique Lima de Oliveira, Edmilson Patricio dos Santos,  
 Waldemar Serafim Neto
