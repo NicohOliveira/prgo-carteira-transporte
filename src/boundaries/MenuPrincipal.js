@@ -2,57 +2,60 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAutenticador } from '../controls/Autenticador';
+import { useCarteirinha } from '../controls/GerenciadorCarteirinha';
 import { Ionicons } from '@expo/vector-icons';
 
 export default function TelaMenuPrincipal() {
   const router = useRouter();
   const { finalizarSessao } = useAutenticador();
+  const { saldo } = useCarteirinha();
 
-  // + clicarBotaoLogout()
   const clicarBotaoLogout = () => {
-    finalizarSessao(); // Chama o método do Autenticador
-    router.replace('/'); 
+    finalizarSessao();
+    router.replace('/');
   };
 
-  // + redirecionar()
   const redirecionar = (rota) => {
     router.push(rota);
   };
 
   return (
-    <View style={styles.container}>
-      <ScrollView contentContainerStyle={styles.content}>
-        {/* Card de Saldo */}
-        <View style={styles.saldoCard}>
-          <View>
-            <Text style={styles.saldoLabel}>Saldo disponível</Text>
-            <Text style={styles.saldoValor}>R$ 45,80</Text>
+      <View style={styles.container}>
+        <ScrollView contentContainerStyle={styles.content}>
+
+          {/* transformei a view do saldo em um botão (TouchableOpacity) */}
+          <TouchableOpacity style={styles.saldoCard} onPress={() => redirecionar('/recarga')}>
+            <View>
+              <Text style={styles.saldoLabel}>Saldo disponível</Text>
+              {/* toquei o R$ 45,80 fixo pelo saldo dinâmico formatado com duas casas decimais */}
+              <Text style={styles.saldoValor}>R$ {(Number(saldo) || 0).toFixed(2).replace('.', ',')}</Text>
+            </View>
+            <Ionicons name="bus" size={60} color="white" />
+          </TouchableOpacity>
+
+          {/* transformei a View do QR Code em um botão */ }
+          <TouchableOpacity style={styles.qrCard} onPress={() => redirecionar('/carteirinha')}>
+            <Text style={styles.qrTitle}>Carteirinha QR</Text>
+            <Ionicons name="qr-code" size={180} color="black" />
+          </TouchableOpacity>
+
+          <View style={styles.row}>
+            <TouchableOpacity style={styles.navButton} onPress={() => redirecionar('/historico')}>
+              <Ionicons name="time-outline" size={24} color="white" />
+              <Text style={styles.navButtonText}>Histórico</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.navButton} onPress={() => redirecionar('/configuracao')}>
+              <Ionicons name="settings-outline" size={24} color="white" />
+              <Text style={styles.navButtonText}>Configurações</Text>
+            </TouchableOpacity>
           </View>
-          <Ionicons name="bus" size={60} color="white" />
-        </View>
 
-        <View style={styles.qrCard}>
-          <Text style={styles.qrTitle}>Carteirinha QR</Text>
-          <Ionicons name="qr-code" size={180} color="black" />
-        </View>
-
-        <View style={styles.row}>
-          <TouchableOpacity style={styles.navButton} onPress={() => redirecionar('/historico')}>
-            <Ionicons name="time-outline" size={24} color="white" />
-            <Text style={styles.navButtonText}>Histórico</Text>
+          <TouchableOpacity style={styles.btnLogout} onPress={clicarBotaoLogout}>
+            <Text style={styles.btnLogoutText}>Sair da Conta</Text>
           </TouchableOpacity>
-
-          <TouchableOpacity style={styles.navButton} onPress={() => redirecionar('/configuracao')}>
-            <Ionicons name="settings-outline" size={24} color="white" />
-            <Text style={styles.navButtonText}>Configurações</Text>
-          </TouchableOpacity>
-        </View>
-
-        <TouchableOpacity style={styles.btnLogout} onPress={clicarBotaoLogout}>
-          <Text style={styles.btnLogoutText}>Sair da Conta</Text>
-        </TouchableOpacity>
-      </ScrollView>
-    </View>
+        </ScrollView>
+      </View>
   );
 }
 
