@@ -27,6 +27,33 @@ export default function TelaCadastro() {
     Alert.alert('Atenção', mensagem || 'Preencha todos os campos corretamente.');
   };
 
+  // Mascaras e validações de dados
+  const formatarCPF = (texto) => {
+    let num = texto.replace(/\D/g, ''); // Remove tudo que não é número
+    if (num.length > 11) num = num.slice(0, 11); // Limita a 11 números
+    // Aplica a formatação xxx.xxx.xxx-xx
+    num = num.replace(/(\d{3})(\d)/, '$1.$2');
+    num = num.replace(/(\d{3})(\d)/, '$1.$2');
+    num = num.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+    return num;
+  };
+
+  const formatarTelefone = (texto) => {
+    let num = texto.replace(/\D/g, ''); // Remove tudo que não é número
+    if (num.length > 11) num = num.slice(0, 11); // Limita a 11 números (com DDD)
+    // Aplica a formatação (xx) xxxxx-xxxx
+    num = num.replace(/^(\d{2})(\d)/g, '($1) $2');
+    num = num.replace(/(\d)(\d{4})$/, '$1-$2');
+    return num;
+  };
+
+  // --- Validação de E-mail ---
+  const validarEmail = (emailText) => {
+    // Verifica padrão básico com @ e ponto
+    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return regex.test(emailText);
+  };
+
   // + inserirDados(): void
   const handleCadastro = async () => {
     if (!nome || !cpf || !email || !senha) {
@@ -34,12 +61,24 @@ export default function TelaCadastro() {
       return;
     }
 
+    // validação de negócio no Boundary antes de mandar pro Control
+    const cpfLimpo = cpf.replace(/\D/g, ''); // tira os pontos e traço para contar
+    if (cpfLimpo.length !== 11) {
+      exibirAlerta('O CPF deve ter exatamente 11 números.');
+      return;
+    }
+
+    if (!validarEmail(email)) {
+      exibirAlerta('Insira um e-mail válido com @ e domínio.');
+      return;
+    }
+
     const dadosParaCadastro = {
       nome,
       idade: parseInt(idade),
-      cpf,
+      cpf: cpfLimpo, // salva limpo no "banco"
       telefone,
-      login: email, // Usando email como login
+      login: email,
       senha,
       carteirinha: null,
       limiteNotificacao: 0.0
@@ -53,7 +92,6 @@ export default function TelaCadastro() {
       exibirAlerta('Erro ao realizar cadastro. Tente novamente.');
     }
   };
-
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
@@ -72,12 +110,25 @@ export default function TelaCadastro() {
             </View>
             <View style={{ flex: 2 }}>
               <Text style={styles.label}>CPF</Text>
-              <TextInput style={styles.input} placeholder="000.000.000-00" value={cpf} onChangeText={setCpf} />
+              <TextInput
+                  style={styles.input}
+                  placeholder="000.000.000-00"
+                  keyboardType="numeric" // Adicionado para abrir só teclado de número
+                  value={cpf}
+                  onChangeText={(texto) => setCpf(formatarCPF(texto))} // Chamando a máscara
+              />
             </View>
           </View>
 
           <Text style={styles.label}>Telefone</Text>
-          <TextInput style={styles.input} placeholder="(00) 00000-0000" value={telefone} onChangeText={setTelefone} />
+          <TextInput
+              style={styles.input}
+              placeholder="(00) 00000-0000"
+              keyboardType="phone-pad" // Teclado otimizado para telefone
+              value={telefone}
+              onChangeText={(texto) => setTelefone(formatarTelefone(texto))} // Chamando a máscara
+          />
+
 
           <Text style={styles.label}>E-mail (Login)</Text>
           <TextInput style={styles.input} placeholder="email@exemplo.com" autoCapitalize="none" value={email} onChangeText={setEmail} />
