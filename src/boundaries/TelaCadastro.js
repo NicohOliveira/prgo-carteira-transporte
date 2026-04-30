@@ -18,7 +18,7 @@ export default function TelaCadastro() {
   // + exibirMensagemSucesso(): void
   const exibirMensagemSucesso = () => {
     Alert.alert('Sucesso', 'Usuário cadastrado com sucesso!', [
-      { text: 'OK', onPress: () => router.replace('/index') }
+      { text: 'OK', onPress: () => router.replace('/') }
     ]);
   };
 
