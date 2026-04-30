@@ -7,8 +7,11 @@ import { useCarteirinha } from '../controls/GerenciadorCarteirinha';
 
 export default function TelaCarteirinha() {
     const router = useRouter();
-    const { usuarioLogado } = useUsuario();
+
+    const { usuarioLogado, usuarios } = useUsuario();
     const { codigoQr } = useCarteirinha();
+
+    const usuarioExibicao = usuarioLogado || (usuarios.length > 0 ? usuarios[usuarios.length - 1] : null);
 
     return (
         <View style={styles.container}>
@@ -21,13 +24,16 @@ export default function TelaCarteirinha() {
             </View>
 
             <View style={styles.card}>
-                {/* Placeholder para a imagem real do usuário */}
                 <Ionicons name="person-circle" size={100} color="#ccc" />
-                <Text style={styles.name}>{usuarioLogado?._nome || 'Usuário Não Logado'}</Text>
-                <Text style={styles.cardNumber}>0000123456-Comum</Text>
+                {/* 3. Mostramos o nome e usamos o CPF como número do cartão para ficar realista */}
+                <Text style={styles.name}>{usuarioExibicao?._nome || 'Usuário Não Encontrado'}</Text>
+                <Text style={styles.cardNumber}>
+                    {usuarioExibicao?._cpf ? `${usuarioExibicao._cpf}-Comum` : '0000123456-Comum'}
+                </Text>
             </View>
 
             <View style={styles.qrContainer}>
+                {/* O QR Code na vida real seria gerado pela biblioteca react-native-qrcode-svg usando a variável codigoQr */}
                 <Ionicons name="qr-code" size={250} color="black" />
                 <Text style={styles.qrText}>Aproxime do leitor na catraca</Text>
             </View>

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Switch } from 'react-native';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useUsuario } from '../controls/GerenciadorUsuario';
@@ -14,6 +15,7 @@ export default function TelaCadastro() {
   const [telefone, setTelefone] = useState('');
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
+  const [isento, setIsento] = useState(false);
 
   // + exibirMensagemSucesso(): void
   const exibirMensagemSucesso = () => {
@@ -56,7 +58,7 @@ export default function TelaCadastro() {
 
   // + inserirDados(): void
   const handleCadastro = async () => {
-    if (!nome || !cpf || !email || !senha) {
+    if (!nome || !cpf || !email || !senha || !isento) {
       exibirAlerta('Campos obrigatórios faltando.');
       return;
     }
@@ -81,7 +83,8 @@ export default function TelaCadastro() {
       login: email,
       senha,
       carteirinha: null,
-      limiteNotificacao: 0.0
+      limiteNotificacao: 0.0,
+      isento
     };
 
     const sucesso = await solicitarCadastro(dadosParaCadastro);
@@ -135,7 +138,15 @@ export default function TelaCadastro() {
 
           <Text style={styles.label}>Senha</Text>
           <TextInput style={styles.input} placeholder="********" secureTextEntry value={senha} onChangeText={setSenha} />
-
+          <View style={styles.switchContainer}>
+            <Text style={styles.labelSwitch}>Possui isenção (Estudante/Idoso)?</Text>
+            <Switch
+                value={isento}
+                onValueChange={setIsento}
+                trackColor={{ false: "#ccc", true: "#a8d5ba" }}
+                thumbColor={isento ? "#008c45" : "#f4f3f4"}
+            />
+          </View>
           {/* Botão de Ação */}
           <TouchableOpacity style={styles.button} onPress={handleCadastro}>
             <Text style={styles.buttonText}>Finalizar Cadastro</Text>

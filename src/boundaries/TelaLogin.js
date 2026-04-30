@@ -2,12 +2,14 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAutenticador } from '../controls/Autenticador';
+import { useUsuario } from '../controls/GerenciadorUsuario';
 
 // ... imports anteriores
 
 export default function TelaLogin() {
   const router = useRouter();
   const { validarAcesso } = useAutenticador();
+  const { usuarios } = useUsuario();
 
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
@@ -56,9 +58,16 @@ export default function TelaLogin() {
         </TouchableOpacity>
 
         {/* --- O NOVO BOTÃO ABAIXO --- */}
-        <TouchableOpacity 
-          style={styles.buttonOutline} 
-          onPress={() => Alert.alert("Aviso", "Funcionalidade de acesso rápido em desenvolvimento.")}
+        <TouchableOpacity
+            style={styles.buttonOutline}
+            onPress={() => {
+              if (usuarios.length > 0) {
+                // Se existir qualquer cadastro na memória, permite ver o QR
+                router.push('/carteirinha');
+              } else {
+                Alert.alert("Aviso", "Nenhuma conta registrada. Faça um cadastro primeiro para usar o acesso rápido.");
+              }
+            }}
         >
           <Text style={styles.buttonOutlineText}>Acessar Carteirinha QR</Text>
         </TouchableOpacity>

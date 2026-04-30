@@ -42,7 +42,7 @@ export default class Carteirinha {
         return this._codigoQr;
     }
 
-    // --- Getters e Setters (Isso é o que garante que o saldo apareça na tela!) ---
+    //  getters e setters
     get idCarteirinha() { return this._idCarteirinha; }
     get saldo() { return this._saldo; }
     get isento() { return this._isento; }

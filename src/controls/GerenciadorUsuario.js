@@ -1,5 +1,6 @@
 import React, { createContext, useState, useContext } from 'react';
 import Usuario from '../entities/Usuario';
+import Carteirinha from '../entities/Carteirinha';
 
 export const UsuarioContext = createContext();
 
@@ -21,8 +22,7 @@ export const GerenciadorUsuarioProvider = ({ children }) => {
       dados.telefone,
       dados.login,
       dados.senha,
-      null,
-      0.0
+        new Carteirinha(Date.now(), 0.0, "QR_" + dados.cpf, dados.isento || false),       0.0
     );
 
     setUsuarios(prev => [...prev, novoUsuario]);
@@ -77,16 +77,14 @@ export const GerenciadorUsuarioProvider = ({ children }) => {
   };
 
   return (
-    <UsuarioContext.Provider value={{
-      usuarios,
-      usuarioLogado,
-      setUsuarioLogado,
-      solicitarCadastro,
-      solicitarAtualizacao,
-      solicitarExclusao
-    }}>
-      {children}
-    </UsuarioContext.Provider>
+      <UsuarioContext.Provider value={{
+        usuarios,
+        usuarioLogado,
+        setUsuarioLogado,
+        solicitarCadastro
+      }}>
+        {children}
+      </UsuarioContext.Provider>
   );
 };
 

@@ -4,11 +4,14 @@ import { useRouter } from 'expo-router';
 import { useAutenticador } from '../controls/Autenticador';
 import { useCarteirinha } from '../controls/GerenciadorCarteirinha';
 import { Ionicons } from '@expo/vector-icons';
+import { useUsuario } from '../controls/GerenciadorUsuario';
 
 export default function TelaMenuPrincipal() {
   const router = useRouter();
   const { finalizarSessao } = useAutenticador();
   const { saldo } = useCarteirinha();
+  const { usuarioLogado } = useUsuario();
+  const nomeExibicao = usuarioLogado?._nome ? usuarioLogado._nome.split(' ')[0] : 'Usuário';
 
   const clicarBotaoLogout = () => {
     finalizarSessao();
@@ -22,7 +25,15 @@ export default function TelaMenuPrincipal() {
   return (
       <View style={styles.container}>
         <ScrollView contentContainerStyle={styles.content}>
-
+          <View style={styles.headerTop}>
+            <TouchableOpacity style={styles.circlePhoto} onPress={() => router.push('/perfil')}>
+              <Ionicons name="person" size={30} color="#ccc" />
+            </TouchableOpacity>
+            <View style={styles.headerTextContainer}>
+              <Text style={styles.greetingTitle}>Olá, {nomeExibicao}</Text>
+              <Text style={styles.greetingSubtitle}>Pra onde vamos hoje?</Text>
+            </View>
+          </View>
           {/* transformei a view do saldo em um botão (TouchableOpacity) */}
           <TouchableOpacity style={styles.saldoCard} onPress={() => redirecionar('/recarga')}>
             <View>
@@ -71,5 +82,10 @@ const styles = StyleSheet.create({
   navButton: { backgroundColor: '#008c45', width: '48%', height: 80, borderRadius: 20, justifyContent: 'center', alignItems: 'center' },
   navButtonText: { color: 'white', fontWeight: 'bold', marginTop: 5 },
   btnLogout: { marginTop: 30, padding: 10 },
-  btnLogoutText: { color: 'red', fontWeight: 'bold' }
+  btnLogoutText: { color: 'red', fontWeight: 'bold' },
+  headerTop: { flexDirection: 'row', alignItems: 'center', width: '100%', marginBottom: 25, alignSelf: 'flex-start', marginTop: 20 },
+  circlePhoto: { width: 60, height: 60, borderRadius: 30, backgroundColor: '#f0f0f0', justifyContent: 'center', alignItems: 'center', borderWidth: 2, borderColor: '#008c45' },
+  headerTextContainer: { marginLeft: 15 },
+  greetingTitle: { fontSize: 22, fontWeight: 'bold', color: '#008c45' },
+  greetingSubtitle: { fontSize: 14, color: '#666' }
 });
