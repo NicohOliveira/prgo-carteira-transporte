@@ -58,7 +58,7 @@ export default function TelaCadastro() {
 
   // + inserirDados(): void
   const handleCadastro = async () => {
-    if (!nome || !cpf || !email || !senha || !isento) {
+    if (!nome || !cpf || !email || !senha) {
       exibirAlerta('Campos obrigatórios faltando.');
       return;
     }
