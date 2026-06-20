@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { Switch } from 'react-native';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert, ActivityIndicator } from 'react-native';
+import { Switch, View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useUsuario } from '../controls/GerenciadorUsuario';
 
@@ -24,7 +23,7 @@ export default function TelaCadastro() {
   };
 
   const exibirAlerta = (mensagem) => {
-    Alert.alert('Atenção', mensagem || 'Preencha todos os campos corretamente.');
+    Alert.alert('Atenção', mensagem);
   };
 
   const formatarCPF = (texto) => {
@@ -50,8 +49,10 @@ export default function TelaCadastro() {
   };
 
   const handleCadastro = async () => {
-    if (!nome || !cpf || !email || !senha) {
-      exibirAlerta('Campos obrigatórios faltando.');
+    const emailLimpo = email.trim();
+
+    if (!nome || !cpf || !emailLimpo || !senha) {
+      exibirAlerta('Existem campos obrigatórios em branco.');
       return;
     }
 
@@ -61,102 +62,110 @@ export default function TelaCadastro() {
       return;
     }
 
-    if (!validarEmail(email)) {
-      exibirAlerta('Insira um e-mail válido com @ e domínio.');
+    if (!validarEmail(emailLimpo)) {
+      exibirAlerta('Insira um e-mail válido contendo "@" e o domínio (ex: .com).');
       return;
     }
 
     const dadosParaCadastro = {
       nome,
-      idade: parseInt(idade),
+      idade: parseInt(idade) || 20,
       cpf: cpfLimpo,
       telefone,
-      login: email,
+      login: emailLimpo,
       senha,
-      carteirinha: null,
-      limiteNotificacao: 0.0,
       isento
     };
+
     setCarregando(true);
+
     const sucesso = await solicitarCadastro(dadosParaCadastro);
-   setCarregando(false);
+
+    setCarregando(false);
+
     if (sucesso) {
       exibirMensagemSucesso();
     } else {
-      exibirAlerta('Erro ao realizar cadastro. Tente novamente.');
+      exibirAlerta('O cadastro falhou! Verifique se este E-mail ou CPF já estão cadastrados no sistema.');
     }
   };
+
   return (
-    <View style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
-        <View style={styles.card}>
-          <Text style={styles.title}>Cadastro</Text>
-          <Text style={styles.subtitle}>Crie sua conta para começar</Text>
+      <View style={styles.container}>
+        <ScrollView
+            contentContainerStyle={styles.scrollContainer}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+        >
+          <View style={styles.card}>
+            <Text style={styles.title}>Cadastro</Text>
+            <Text style={styles.subtitle}>Crie sua conta para começar</Text>
 
-          {/* Inputs baseados no diagrama de Pessoa/Usuario */}
-          <Text style={styles.label}>Nome Completo</Text>
-          <TextInput style={styles.input} placeholder="Ex: Neymar Jr" value={nome} onChangeText={setNome} />
+            <Text style={styles.label}>Nome Completo</Text>
+            <TextInput style={styles.input} placeholder="Ex: Neymar Jr" value={nome} onChangeText={setNome} />
 
-          <View style={styles.row}>
-            <View style={{ flex: 1, marginRight: 10 }}>
-              <Text style={styles.label}>Idade</Text>
-              <TextInput style={styles.input} placeholder="32" keyboardType="numeric" value={idade} onChangeText={setIdade} />
+            <View style={styles.row}>
+              <View style={{ flex: 1, marginRight: 10 }}>
+                <Text style={styles.label}>Idade</Text>
+                <TextInput style={styles.input} placeholder="32" keyboardType="numeric" value={idade} onChangeText={setIdade} />
+              </View>
+              <View style={{ flex: 2 }}>
+                <Text style={styles.label}>CPF</Text>
+                <TextInput
+                    style={styles.input}
+                    placeholder="000.000.000-00"
+                    keyboardType="numeric"
+                    value={cpf}
+                    onChangeText={(texto) => setCpf(formatarCPF(texto))}
+                />
+              </View>
             </View>
-            <View style={{ flex: 2 }}>
-              <Text style={styles.label}>CPF</Text>
-              <TextInput
-                  style={styles.input}
-                  placeholder="000.000.000-00"
-                  keyboardType="numeric"
-                  value={cpf}
-                  onChangeText={(texto) => setCpf(formatarCPF(texto))}
+
+            <Text style={styles.label}>Telefone</Text>
+            <TextInput
+                style={styles.input}
+                placeholder="(00) 00000-0000"
+                keyboardType="phone-pad"
+                value={telefone}
+                onChangeText={(texto) => setTelefone(formatarTelefone(texto))}
+            />
+
+            <Text style={styles.label}>E-mail (Login)</Text>
+            <TextInput style={styles.input} placeholder="email@exemplo.com" autoCapitalize="none" value={email} onChangeText={setEmail} />
+
+            <Text style={styles.label}>Senha</Text>
+            <TextInput style={styles.input} placeholder="********" secureTextEntry value={senha} onChangeText={setSenha} />
+
+            <View style={styles.switchContainer}>
+              <Text style={styles.labelSwitch}>Possui isenção (Estudante/Idoso)?</Text>
+              <Switch
+                  value={isento}
+                  onValueChange={setIsento}
+                  trackColor={{ false: "#ccc", true: "#a8d5ba" }}
+                  thumbColor={isento ? "#008c45" : "#f4f3f4"}
               />
             </View>
+
+            <TouchableOpacity
+                style={styles.button}
+                onPress={handleCadastro}
+                disabled={carregando}
+            >
+              <Text style={styles.buttonText}>Finalizar Cadastro</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+              <Text style={styles.backButtonText}>Já tenho conta? Voltar</Text>
+            </TouchableOpacity>
           </View>
-
-          <Text style={styles.label}>Telefone</Text>
-          <TextInput
-              style={styles.input}
-              placeholder="(00) 00000-0000"
-              keyboardType="phone-pad"
-              value={telefone}
-              onChangeText={(texto) => setTelefone(formatarTelefone(texto))}
-          />
-
-
-          <Text style={styles.label}>E-mail (Login)</Text>
-          <TextInput style={styles.input} placeholder="email@exemplo.com" autoCapitalize="none" value={email} onChangeText={setEmail} />
-
-          <Text style={styles.label}>Senha</Text>
-          <TextInput style={styles.input} placeholder="********" secureTextEntry value={senha} onChangeText={setSenha} />
-          <View style={styles.switchContainer}>
-            <Text style={styles.labelSwitch}>Possui isenção (Estudante/Idoso)?</Text>
-            <Switch
-                value={isento}
-                onValueChange={setIsento}
-                trackColor={{ false: "#ccc", true: "#a8d5ba" }}
-                thumbColor={isento ? "#008c45" : "#f4f3f4"}
-            />
-          </View>
-
-          <TouchableOpacity
-              style={styles.button}
-              onPress={handleCadastro}
-              disabled={carregando}
-          >
-            {carregando ? (
-                <ActivityIndicator size="small" color="#fff" />
-            ) : (
-                <Text style={styles.buttonText}>Finalizar Cadastro</Text>
-            )}
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-            <Text style={styles.backButtonText}>Já tenho conta? Voltar</Text>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
-    </View>
+        </ScrollView>
+        {carregando && (
+            <View style={styles.overlay}>
+              <ActivityIndicator size="large" color="#fff" />
+              <Text style={styles.textoCarregando}>A gravar na base de dados...</Text>
+            </View>
+        )}
+      </View>
   );
 }
 
@@ -174,5 +183,19 @@ const styles = StyleSheet.create({
   backButton: { marginTop: 20 },
   backButtonText: { color: '#008c45', fontWeight: '600' },
   switchContainer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', width: '100%', marginVertical: 15, paddingHorizontal: 5 },
-  labelSwitch: { color: '#008c45', fontWeight: 'bold', fontSize: 14 }
+  labelSwitch: { color: '#008c45', fontWeight: 'bold', fontSize: 14 },
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 999,
+    elevation: 10,
+  },
+  textoCarregando: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginTop: 15,
+  }
 });

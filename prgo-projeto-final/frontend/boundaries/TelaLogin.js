@@ -7,7 +7,7 @@ import { useUsuario } from '../controls/GerenciadorUsuario';
 export default function TelaLogin() {
   const router = useRouter();
   const { validarAcesso } = useAutenticador();
-  const { usuarios } = useUsuario();
+  const { usuarioLogado } = useUsuario();
 
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
@@ -75,7 +75,7 @@ export default function TelaLogin() {
           <TouchableOpacity
               style={styles.buttonOutline}
               onPress={() => {
-                if (usuarios.length > 0) {
+                if (usuarioLogado) {
                   router.push('/carteirinha');
                 } else {
                   Alert.alert("Aviso", "Nenhuma conta registrada. Faça um cadastro primeiro para usar o acesso rápido.");
@@ -83,14 +83,6 @@ export default function TelaLogin() {
               }}
           >
             <Text style={styles.buttonOutlineText}>Acessar Carteirinha QR</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-              style={styles.button}
-              onPress={handleLogin}
-              disabled={carregando}
-          >
-            <Text style={styles.buttonText}>Entrar</Text>
           </TouchableOpacity>
         </View>
         {carregando && (

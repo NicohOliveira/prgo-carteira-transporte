@@ -1,6 +1,7 @@
 package com.example.backend.controllers;
 
 import com.example.backend.entities.Usuario;
+import com.example.backend.entities.Carteirinha;
 import com.example.backend.repositories.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -18,6 +19,12 @@ public class UsuarioController {
 
     @PostMapping
     public ResponseEntity<Usuario> cadastrar(@RequestBody Usuario usuario) {
+        Carteirinha novaCarteirinha = new Carteirinha();
+        novaCarteirinha.setSaldo(0.0);
+        novaCarteirinha.setCodigoQr("QR_" + usuario.getCpf());
+        novaCarteirinha.setUsuario(usuario);
+        usuario.setCarteirinha(novaCarteirinha);
+
         Usuario novoUsuario = repository.save(usuario);
         return ResponseEntity.ok(novoUsuario);
     }
@@ -72,6 +79,31 @@ public class UsuarioController {
 
         public String getSenha() { return senha; }
         public void setSenha(String senha) { this.senha = senha; }
+    }
+
+    @PatchMapping("/{id}/recarga")
+    public ResponseEntity<Usuario> recarregar(@PathVariable Long id, @RequestBody RecargaRequest request) {
+        return repository.findById(id)
+                .map(usuario -> {
+                    if (usuario.getCarteirinha() == null) {
+                        Carteirinha novaCarteirinha = new Carteirinha();
+                        novaCarteirinha.setSaldo(0.0);
+                        novaCarteirinha.setCodigoQr("QR_" + usuario.getCpf());
+                        novaCarteirinha.setUsuario(usuario);
+                        usuario.setCarteirinha(novaCarteirinha);
+                    }
+                    double saldoAtual = usuario.getCarteirinha().getSaldo();
+                    usuario.getCarteirinha().setSaldo(saldoAtual + request.getValor());
+
+                    Usuario atualizado = repository.save(usuario);
+                    return ResponseEntity.ok(atualizado);
+                })
+                .orElse(ResponseEntity.notFound().build());
+    }
+    public static class RecargaRequest {
+        private Double valor;
+        public Double getValor() { return valor; }
+        public void setValor(Double valor) { this.valor = valor; }
     }
 }
 

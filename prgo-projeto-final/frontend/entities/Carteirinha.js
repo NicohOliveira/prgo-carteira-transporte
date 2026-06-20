@@ -47,4 +47,8 @@ export default class Carteirinha {
     get saldo() { return this._saldo; }
     get isento() { return this._isento; }
     get codigoQr() { return this._codigoQr; }
+
+    set saldo(novoSaldo) {
+        this._saldo = novoSaldo;
+    }
 }

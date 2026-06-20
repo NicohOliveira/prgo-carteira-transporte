@@ -30,6 +30,9 @@ public class Usuario {
     @Column(columnDefinition = "boolean default false")
     private Boolean isento = false;
 
+    @OneToOne(mappedBy = "usuario", cascade = CascadeType.ALL)
+    private Carteirinha carteirinha;
+
     public Usuario() {
     }
 
@@ -67,4 +70,8 @@ public class Usuario {
 
     public Boolean getIsento() { return isento; }
     public void setIsento(Boolean isento) { this.isento = isento; }
+
+
+    public Carteirinha getCarteirinha() { return carteirinha; }
+    public void setCarteirinha(Carteirinha carteirinha) { this.carteirinha = carteirinha; }
 }

@@ -6,12 +6,7 @@ import { API_URL } from '../constants/api';
 export const UsuarioContext = createContext();
 
 export const GerenciadorUsuarioProvider = ({ children }) => {
-    const [usuarios, setUsuarios] = useState([]);
     const [usuarioLogado, setUsuarioLogado] = useState(null);
-
-    const validarDados = (dados) => {
-        return !!(dados.nome && dados.cpf && dados.login && dados.senha);
-    };
 
     const solicitarCadastro = async (dados) => {
         const payload = {
@@ -38,22 +33,6 @@ export const GerenciadorUsuarioProvider = ({ children }) => {
                 console.log("Erro no backend. Status:", resposta.status);
                 return false;
             }
-
-            try {
-                const usuarioServidor = await resposta.json();
-
-                const novoUsuario = new Usuario(
-                    usuarioServidor.nome, usuarioServidor.idade, usuarioServidor.cpf,
-                    usuarioServidor.telefone, usuarioServidor.login, usuarioServidor.senha,
-                    new Carteirinha(Date.now(), 0.0, "QR_" + usuarioServidor.cpf, usuarioServidor.isento || false),
-                    0.0
-                );
-                novoUsuario.id = usuarioServidor.id;
-                setUsuarios(prev => [...prev, novoUsuario]);
-            } catch (erroJson) {
-                console.log("Aviso: Cadastro feito, mas o servidor não retornou um JSON válido.", erroJson);
-            }
-
             return true;
 
         } catch (erro) {
@@ -64,42 +43,23 @@ export const GerenciadorUsuarioProvider = ({ children }) => {
 
     const solicitarAtualizacao = async (novosDados) => {
         if (!usuarioLogado || !usuarioLogado.id) return false;
-        const payload = {
-            nome: novosDados.nome ?? usuarioLogado._nome,
-            idade: usuarioLogado._idade,
-            cpf: usuarioLogado._cpf,
-            telefone: novosDados.telefone ?? usuarioLogado._telefone,
-            login: usuarioLogado._login,
-            senha: usuarioLogado._senha,
-            isento: usuarioLogado._carteirinha?._isento || false
-        };
+
+        const payload = { ...novosDados };
 
         try {
-            const resposta = await fetch(`${`${API_URL}/usuarios`}/${usuarioLogado.id}`, {
+            const resposta = await fetch(`${API_URL}/usuarios/${usuarioLogado.id}`, {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Bypass-Tunnel-Reminder': 'true'
+                },
                 body: JSON.stringify(payload)
             });
 
             if (!resposta.ok) return false;
 
             const usuarioServidor = await resposta.json();
-
-            const usuarioAtualizado = new Usuario(
-                usuarioServidor.nome,
-                usuarioServidor.idade,
-                usuarioServidor.cpf,
-                usuarioServidor.telefone,
-                usuarioServidor.login,
-                usuarioServidor.senha,
-                usuarioLogado._carteirinha,
-                usuarioLogado._limite
-            );
-            usuarioAtualizado.id = usuarioServidor.id;
-
-            setUsuarios(prev => prev.map(u => u.id === usuarioLogado.id ? usuarioAtualizado : u));
-            setUsuarioLogado(usuarioAtualizado);
-
+            setUsuarioLogado(usuarioServidor);
             return true;
         } catch (erro) {
             console.error("Erro ao conectar no servidor para atualização:", erro);
@@ -111,13 +71,12 @@ export const GerenciadorUsuarioProvider = ({ children }) => {
         if (!usuarioLogado || !usuarioLogado.id) return false;
 
         try {
-            const resposta = await fetch(`${`${API_URL}/usuarios`}/${usuarioLogado.id}`, {
-                method: 'DELETE'
+            const resposta = await fetch(`${API_URL}/usuarios/${usuarioLogado.id}`, {
+                method: 'DELETE',
+                headers: { 'Bypass-Tunnel-Reminder': 'true' }
             });
 
             if (!resposta.ok) return false;
-
-            setUsuarios(prev => prev.filter(u => u.id !== usuarioLogado.id));
             setUsuarioLogado(null);
             return true;
         } catch (erro) {
@@ -126,41 +85,13 @@ export const GerenciadorUsuarioProvider = ({ children }) => {
         }
     };
 
-    const sincronizarUsuariosDoBanco = async () => {
-        try {
-            const resposta = await fetch(`${API_URL}/usuarios`);
-            if (resposta.ok) {
-                const dadosBanco = await resposta.json();
-                const listaEntidades = dadosBanco.map(u => {
-                    const inst = new Usuario(
-                        u.nome,
-                        u.idade,
-                        u.cpf,
-                        u.telefone,
-                        u.login,
-                        u.senha,
-                        new Carteirinha(Date.now(), 0.0, "QR_" + u.cpf, u.isento),
-                        0.0
-                    );
-                    inst.id = u.id;
-                    return inst;
-                });
-                setUsuarios(listaEntidades);
-            }
-        } catch (erro) {
-            console.error("Erro ao buscar usuários do banco:", erro);
-        }
-    };
-
     return (
         <UsuarioContext.Provider value={{
-            usuarios,
             usuarioLogado,
             setUsuarioLogado,
             solicitarCadastro,
             solicitarAtualizacao,
-            solicitarExclusao,
-            sincronizarUsuariosDoBanco
+            solicitarExclusao
         }}>
             {children}
         </UsuarioContext.Provider>

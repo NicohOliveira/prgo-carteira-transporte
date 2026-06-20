@@ -12,7 +12,6 @@ export const AutenticadorProvider = ({ children }) => {
 
   const validarAcesso = async (login, senha) => {
     try {
-      // envia credencial
       const resposta = await fetch(`${API_URL}/usuarios/login`, {
         method: 'POST',
         headers: {
@@ -26,9 +25,19 @@ export const AutenticadorProvider = ({ children }) => {
         return false;
       }
 
-      // credenciais validas
       const dadosUsuario = await resposta.json();
 
+      let carteirinhaDoBanco = null;
+      if (dadosUsuario.carteirinha) {
+        carteirinhaDoBanco = new Carteirinha(
+            dadosUsuario.carteirinha.id,
+            dadosUsuario.carteirinha.saldo,
+            dadosUsuario.carteirinha.codigoQr,
+            dadosUsuario.isento || false
+        );
+      } else {
+        carteirinhaDoBanco = new Carteirinha(Date.now(), 0.0, "QR_" + dadosUsuario.cpf, dadosUsuario.isento || false);
+      }
       const usuarioAutenticado = new Usuario(
           dadosUsuario.nome,
           dadosUsuario.idade,
@@ -36,11 +45,12 @@ export const AutenticadorProvider = ({ children }) => {
           dadosUsuario.telefone,
           dadosUsuario.login,
           dadosUsuario.senha,
-          new Carteirinha(Date.now(), 0.0, "QR_" + dadosUsuario.cpf, dadosUsuario.isento || false),
+          carteirinhaDoBanco,
           0.0
       );
 
       usuarioAutenticado.id = dadosUsuario.id;
+
       setUsuarioLogado(usuarioAutenticado);
       setSessaoAtiva(true);
       return true;

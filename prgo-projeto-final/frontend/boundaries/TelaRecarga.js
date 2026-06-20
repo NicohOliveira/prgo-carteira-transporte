@@ -1,21 +1,25 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, TextInput } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 
 export default function TelaRecarga() {
     const router = useRouter();
     const [valor, setValor] = useState(null);
+    const [valorDigitado, setValorDigitado] = useState('');
     const [metodo, setMetodo] = useState('PIX');
 
     const valores = [10, 20, 30, 50, 100, 200];
 
     const handleAvancar = () => {
-        if (!valor) return Alert.alert("Atenção", "Escolha um valor para recarregar.");
+        const valorFinal = valorDigitado ? parseFloat(valorDigitado.replace(',', '.')) : valor;
+
+        if (!valorFinal || isNaN(valorFinal) || valorFinal <= 0) {
+            return Alert.alert("Atenção", "Informe um valor válido para recarregar.");
+        }
 
         if (metodo === 'PIX') {
-            // passa o valor via rota para a tela do PIX
-            router.push({ pathname: '/pagamento-pix', params: { valorSelecionado: valor } });
+            router.push({ pathname: '/pagamento-pix', params: { valorSelecionado: valorFinal } });
         } else {
             Alert.alert("Aviso", "Apenas PIX está implementado nesta demonstração.");
         }
@@ -31,13 +35,28 @@ export default function TelaRecarga() {
                     {valores.map((v) => (
                         <TouchableOpacity
                             key={v}
-                            style={[styles.btnValor, valor === v && styles.btnValorSelected]}
-                            onPress={() => setValor(v)}
+                            style={[styles.btnValor, valor === v && !valorDigitado && styles.btnValorSelected]}
+                            onPress={() => {
+                                setValor(v);
+                                setValorDigitado('');
+                            }}
                         >
-                            <Text style={[styles.txtValor, valor === v && styles.txtValorSelected]}>R$ {v}</Text>
+                            <Text style={[styles.txtValor, valor === v && !valorDigitado && styles.txtValorSelected]}>R$ {v}</Text>
                         </TouchableOpacity>
                     ))}
                 </View>
+
+                <Text style={styles.subtitle}>Ou digite outro valor</Text>
+                <TextInput
+                    style={styles.inputPersonalizado}
+                    placeholder="Ex: 15.50"
+                    keyboardType="numeric"
+                    value={valorDigitado}
+                    onChangeText={(texto) => {
+                        setValorDigitado(texto);
+                        setValor(null);
+                    }}
+                />
 
                 <Text style={styles.subtitle}>Escolha um método de pagamento</Text>
                 {['PIX', 'Cartão de Crédito', 'Boleto Bancário'].map((m) => (
@@ -68,6 +87,7 @@ const styles = StyleSheet.create({
     btnValorSelected: { backgroundColor: '#e6f4ea' },
     txtValor: { color: '#008c45', fontWeight: 'bold', fontSize: 16 },
     txtValorSelected: { color: '#006b35' },
+    inputPersonalizado: { width: '100%', padding: 15, borderWidth: 1, borderColor: '#ccc', borderRadius: 10, fontSize: 16, color: '#333', marginBottom: 10 },
     btnMetodo: { flexDirection: 'row', alignItems: 'center', padding: 15, borderWidth: 1, borderColor: '#ccc', borderRadius: 10, marginBottom: 10 },
     btnMetodoSelected: { borderColor: '#008c45', backgroundColor: '#e6f4ea' },
     txtMetodo: { marginLeft: 10, fontSize: 16, color: '#666' },
