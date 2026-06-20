@@ -1,14 +1,13 @@
 import React, { useState } from 'react';
 import { Switch } from 'react-native';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useUsuario } from '../controls/GerenciadorUsuario';
 
 export default function TelaCadastro() {
   const router = useRouter();
-  const { solicitarCadastro } = useUsuario(); // - gerenciador: GerenciadorUsuario
+  const { solicitarCadastro } = useUsuario();
 
-  // Estados locais para os campos (inserirDados)
   const [nome, setNome] = useState('');
   const [idade, setIdade] = useState('');
   const [cpf, setCpf] = useState('');
@@ -16,24 +15,21 @@ export default function TelaCadastro() {
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
   const [isento, setIsento] = useState(false);
+  const [carregando, setCarregando] = useState(false);
 
-  // + exibirMensagemSucesso(): void
   const exibirMensagemSucesso = () => {
     Alert.alert('Sucesso', 'Usuário cadastrado com sucesso!', [
-      { text: 'OK', onPress: () => router.replace('/') }
+      { text: 'OK', onPress: () => router.back() }
     ]);
   };
 
-  // + exibirAlerta(): void
   const exibirAlerta = (mensagem) => {
     Alert.alert('Atenção', mensagem || 'Preencha todos os campos corretamente.');
   };
 
-  // Mascaras e validações de dados
   const formatarCPF = (texto) => {
-    let num = texto.replace(/\D/g, ''); // Remove tudo que não é número
-    if (num.length > 11) num = num.slice(0, 11); // Limita a 11 números
-    // Aplica a formatação xxx.xxx.xxx-xx
+    let num = texto.replace(/\D/g, '');
+    if (num.length > 11) num = num.slice(0, 11);
     num = num.replace(/(\d{3})(\d)/, '$1.$2');
     num = num.replace(/(\d{3})(\d)/, '$1.$2');
     num = num.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
@@ -41,30 +37,25 @@ export default function TelaCadastro() {
   };
 
   const formatarTelefone = (texto) => {
-    let num = texto.replace(/\D/g, ''); // Remove tudo que não é número
-    if (num.length > 11) num = num.slice(0, 11); // Limita a 11 números (com DDD)
-    // Aplica a formatação (xx) xxxxx-xxxx
+    let num = texto.replace(/\D/g, '');
+    if (num.length > 11) num = num.slice(0, 11);
     num = num.replace(/^(\d{2})(\d)/g, '($1) $2');
     num = num.replace(/(\d)(\d{4})$/, '$1-$2');
     return num;
   };
 
-  // --- Validação de E-mail ---
   const validarEmail = (emailText) => {
-    // Verifica padrão básico com @ e ponto
     const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return regex.test(emailText);
   };
 
-  // + inserirDados(): void
   const handleCadastro = async () => {
     if (!nome || !cpf || !email || !senha) {
       exibirAlerta('Campos obrigatórios faltando.');
       return;
     }
 
-    // validação de negócio no Boundary antes de mandar pro Control
-    const cpfLimpo = cpf.replace(/\D/g, ''); // tira os pontos e traço para contar
+    const cpfLimpo = cpf.replace(/\D/g, '');
     if (cpfLimpo.length !== 11) {
       exibirAlerta('O CPF deve ter exatamente 11 números.');
       return;
@@ -78,7 +69,7 @@ export default function TelaCadastro() {
     const dadosParaCadastro = {
       nome,
       idade: parseInt(idade),
-      cpf: cpfLimpo, // salva limpo no "banco"
+      cpf: cpfLimpo,
       telefone,
       login: email,
       senha,
@@ -86,9 +77,9 @@ export default function TelaCadastro() {
       limiteNotificacao: 0.0,
       isento
     };
-
+    setCarregando(true);
     const sucesso = await solicitarCadastro(dadosParaCadastro);
-
+   setCarregando(false);
     if (sucesso) {
       exibirMensagemSucesso();
     } else {
@@ -116,9 +107,9 @@ export default function TelaCadastro() {
               <TextInput
                   style={styles.input}
                   placeholder="000.000.000-00"
-                  keyboardType="numeric" // Adicionado para abrir só teclado de número
+                  keyboardType="numeric"
                   value={cpf}
-                  onChangeText={(texto) => setCpf(formatarCPF(texto))} // Chamando a máscara
+                  onChangeText={(texto) => setCpf(formatarCPF(texto))}
               />
             </View>
           </View>
@@ -127,9 +118,9 @@ export default function TelaCadastro() {
           <TextInput
               style={styles.input}
               placeholder="(00) 00000-0000"
-              keyboardType="phone-pad" // Teclado otimizado para telefone
+              keyboardType="phone-pad"
               value={telefone}
-              onChangeText={(texto) => setTelefone(formatarTelefone(texto))} // Chamando a máscara
+              onChangeText={(texto) => setTelefone(formatarTelefone(texto))}
           />
 
 
@@ -147,9 +138,17 @@ export default function TelaCadastro() {
                 thumbColor={isento ? "#008c45" : "#f4f3f4"}
             />
           </View>
-          {/* Botão de Ação */}
-          <TouchableOpacity style={styles.button} onPress={handleCadastro}>
-            <Text style={styles.buttonText}>Finalizar Cadastro</Text>
+
+          <TouchableOpacity
+              style={styles.button}
+              onPress={handleCadastro}
+              disabled={carregando}
+          >
+            {carregando ? (
+                <ActivityIndicator size="small" color="#fff" />
+            ) : (
+                <Text style={styles.buttonText}>Finalizar Cadastro</Text>
+            )}
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
@@ -173,5 +172,7 @@ const styles = StyleSheet.create({
   button: { width: '100%', height: 50, backgroundColor: '#008c45', borderRadius: 10, justifyContent: 'center', alignItems: 'center', marginTop: 15 },
   buttonText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
   backButton: { marginTop: 20 },
-  backButtonText: { color: '#008c45', fontWeight: '600' }
+  backButtonText: { color: '#008c45', fontWeight: '600' },
+  switchContainer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', width: '100%', marginVertical: 15, paddingHorizontal: 5 },
+  labelSwitch: { color: '#008c45', fontWeight: 'bold', fontSize: 14 }
 });

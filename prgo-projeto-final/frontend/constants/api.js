@@ -1,0 +1,1 @@
+export const API_URL = 'https://curvy-animals-design.loca.lt/api';

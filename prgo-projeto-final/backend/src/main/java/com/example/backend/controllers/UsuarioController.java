@@ -10,6 +10,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/usuarios")
+@CrossOrigin(origins = "*")
 public class UsuarioController {
 
     @Autowired
@@ -53,6 +54,24 @@ public class UsuarioController {
             return ResponseEntity.noContent().build();
         }
         return ResponseEntity.notFound().build();
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<?> login(@RequestBody LoginRequest dadosLogin) {
+        return repository.findByLogin(dadosLogin.getLogin())
+                .filter(usuario -> usuario.getSenha().equals(dadosLogin.getSenha()))
+                .map(usuario -> ResponseEntity.ok(usuario)) // Credenciais corretas: retorna o usuário e Status 200
+                .orElse(ResponseEntity.status(401).build()); // Credenciais erradas ou usuário não existe: Status 401 Unauthorized
+    }
+
+    public static class LoginRequest {
+        private String login;
+        private String senha;
+        public String getLogin() { return login; }
+        public void setLogin(String login) { this.login = login; }
+
+        public String getSenha() { return senha; }
+        public void setSenha(String senha) { this.senha = senha; }
     }
 }
 

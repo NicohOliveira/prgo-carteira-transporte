@@ -1,10 +1,8 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAutenticador } from '../controls/Autenticador';
 import { useUsuario } from '../controls/GerenciadorUsuario';
-
-// ... imports anteriores
 
 export default function TelaLogin() {
   const router = useRouter();
@@ -13,71 +11,100 @@ export default function TelaLogin() {
 
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
+  const [carregando, setCarregando] = useState(false);
 
-  const handleLogin = () => {
-    if (validarAcesso(email, senha)) {
+  const handleLogin = async () => {
+    if (!email || !senha) {
+      Alert.alert("Aviso", "Por favor, preencha o e-mail e a senha.");
+      return;
+    }
+    setCarregando(true);
+    // agr o react aguarda a verificação (que vai bater no back-end)
+    const sucesso = await validarAcesso(email, senha);
+    setCarregando(false);
+    if (sucesso) {
       router.replace('/menu');
     } else {
-      Alert.alert("Erro", "Credenciais inválidas.");
+      Alert.alert("Erro", "Credenciais inválidas ou servidor indisponível.");
     }
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.card}>
-        <View style={styles.logoContainer}>
-          <Text style={styles.logoText}>PR{"\n"}GO</Text>
+      <View style={styles.container}>
+        <View style={styles.card}>
+          <View style={styles.logoContainer}>
+            <Text style={styles.logoText}>PR{"\n"}GO</Text>
+          </View>
+
+          <Text style={styles.slogan}>Menos tempo, mais felicidade</Text>
+          <Text style={styles.title}>Log-In</Text>
+
+          <TextInput
+              style={styles.input}
+              placeholder="E-mail"
+              autoCapitalize="none"
+              value={email}
+              onChangeText={setEmail}
+          />
+          <TextInput
+              style={styles.input}
+              placeholder="Senha"
+              secureTextEntry
+              value={senha}
+              onChangeText={setSenha}
+          />
+
+          <TouchableOpacity
+              style={styles.button}
+              onPress={handleLogin}
+              disabled={carregando}
+          >
+            {carregando ? (
+                <ActivityIndicator size="small" color="#fff" />
+            ) : (
+                <Text style={styles.buttonText}>Entrar</Text>
+            )}
+          </TouchableOpacity>
+
+          <TouchableOpacity onPress={() => router.push('/cadastro')}>
+            <Text style={styles.footerText}>
+              Não tem uma conta? <Text style={styles.link}>Cadastrar-se</Text>
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+              style={styles.buttonOutline}
+              onPress={() => {
+                if (usuarios.length > 0) {
+                  router.push('/carteirinha');
+                } else {
+                  Alert.alert("Aviso", "Nenhuma conta registrada. Faça um cadastro primeiro para usar o acesso rápido.");
+                }
+              }}
+          >
+            <Text style={styles.buttonOutlineText}>Acessar Carteirinha QR</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+              style={styles.button}
+              onPress={handleLogin}
+              disabled={carregando}
+          >
+            <Text style={styles.buttonText}>Entrar</Text>
+          </TouchableOpacity>
         </View>
-        
-        <Text style={styles.slogan}>Menos tempo, mais felicidade</Text>
-        <Text style={styles.title}>Log-In</Text>
-
-        {/* Inputs de Login */}
-        <TextInput 
-          style={styles.input} 
-          placeholder="E-mail"
-          value={email}
-          onChangeText={setEmail}
-        />
-        <TextInput 
-          style={styles.input} 
-          placeholder="Senha"
-          secureTextEntry
-          value={senha}
-          onChangeText={setSenha}
-        />
-
-        <TouchableOpacity style={styles.button} onPress={handleLogin}>
-          <Text style={styles.buttonText}>Entrar</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity onPress={() => router.push('/cadastro')}>
-          <Text style={styles.footerText}>
-            Não tem uma conta? <Text style={styles.link}>Cadastrar-se</Text>
-          </Text>
-        </TouchableOpacity>
-
-        {/* --- O NOVO BOTÃO ABAIXO --- */}
-        <TouchableOpacity
-            style={styles.buttonOutline}
-            onPress={() => {
-              if (usuarios.length > 0) {
-                // Se existir qualquer cadastro na memória, permite ver o QR
-                router.push('/carteirinha');
-              } else {
-                Alert.alert("Aviso", "Nenhuma conta registrada. Faça um cadastro primeiro para usar o acesso rápido.");
-              }
-            }}
-        >
-          <Text style={styles.buttonOutlineText}>Acessar Carteirinha QR</Text>
-        </TouchableOpacity>
+        {carregando && (
+            <View style={styles.overlay}>
+              <ActivityIndicator size="large" color="#fff" />
+              <Text style={styles.textoCarregando}>Conectando ao servidor...</Text>
+            </View>
+            )}
       </View>
-    </View>
+
   );
 }
 
 const styles = StyleSheet.create({
-  // ... estilos anteriores ...
   container: { flex: 1, backgroundColor: '#a8d5ba', justifyContent: 'center', alignItems: 'center' },
   card: { backgroundColor: '#fff', padding: 30, borderRadius: 30, width: '90%', alignItems: 'center' },
   logoContainer: { width: 80, height: 80, backgroundColor: '#008c45', borderRadius: 40, justifyContent: 'center', alignItems: 'center', marginBottom: 10 },
@@ -89,21 +116,29 @@ const styles = StyleSheet.create({
   buttonText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
   footerText: { marginTop: 20, color: '#333', marginBottom: 20 },
   link: { color: '#008c45', fontWeight: 'bold' },
-  
-  // Estilo do botão novo
-  buttonOutline: { 
-    width: '100%', 
-    height: 50, 
-    borderWidth: 2, 
-    borderColor: '#008c45', 
-    borderRadius: 25, // Mais arredondado como na imagem
-    justifyContent: 'center', 
+  buttonOutline: {
+    width: '100%',
+    height: 50,
+    borderWidth: 2,
+    borderColor: '#008c45',
+    borderRadius: 25,
+    justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 20 
+    marginTop: 20
   },
-  buttonOutlineText: { 
-    color: '#008c45', 
-    fontSize: 16, 
-    fontWeight: 'bold' 
+  buttonOutlineText: { color: '#008c45', fontSize: 16, fontWeight: 'bold' },
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 999,
+    elevation: 10,
+  },
+  textoCarregando: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginTop: 15,
   }
 });

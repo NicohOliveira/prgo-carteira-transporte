@@ -9,10 +9,9 @@ export default function TelaConfiguracao() {
   const { usuarioLogado, solicitarAtualizacao } = useUsuario();
   const [limite, setLimite] = useState(usuarioLogado?.limiteNotificacao?.toString() || '0');
 
-  // + exibirMensagemSucesso()
+
   const exibirMensagemSucesso = () => Alert.alert("Sucesso", "Limite atualizado!");
 
-  // + informarNovoLimite(valor: Float)
   const informarNovoLimite = () => {
     const sucesso = solicitarAtualizacao({ limiteNotificacao: parseFloat(limite) });
     if (sucesso) exibirMensagemSucesso();
