@@ -81,7 +81,9 @@ export const GerenciadorUsuarioProvider = ({ children }) => {
         usuarios,
         usuarioLogado,
         setUsuarioLogado,
-        solicitarCadastro
+        solicitarCadastro,
+        solicitarAtualizacao,
+        solicitarExclusao
       }}>
         {children}
       </UsuarioContext.Provider>

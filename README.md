@@ -19,9 +19,9 @@ Uma plataforma digital que centraliza:
 
 ## Arquitetura (em definição)
 
-- Mobile: React Native / Flutter (pendente)  
+- Mobile: React Native  
 - Backend: Java Spring / Node.js (pendente)  
-- Padrões: Clean Architecture, Repository Pattern  
+- Padrões: Clean Architecture, Repository Pattern, modelo BCE
 - Metodologia: Engenharia de Software II — 2026/1  
 
 ---
