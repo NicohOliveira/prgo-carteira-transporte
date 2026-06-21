@@ -47,13 +47,15 @@ export const AutenticadorProvider = ({ children }) => {
           dadosUsuario.login,
           dadosUsuario.senha,
           carteirinhaDoBanco,
-          0.0
+          dadosUsuario.isento || false
       );
 
       usuarioAutenticado.id = dadosUsuario.id;
 
       usuarioAutenticado.fotoPerfil = dadosUsuario.fotoPerfil;
 
+      usuarioAutenticado.isento = dadosUsuario.isento;
+      usuarioAutenticado._isento = dadosUsuario.isento;
       setUsuarioLogado(usuarioAutenticado);
       await AsyncStorage.setItem('@usuario_offline', JSON.stringify(usuarioAutenticado));
       setSessaoAtiva(true);

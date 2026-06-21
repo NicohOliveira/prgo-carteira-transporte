@@ -4,8 +4,10 @@ import QRCode from 'react-native-qrcode-svg';
 import { useRouter } from 'expo-router';
 import { useUsuario } from '../controls/GerenciadorUsuario';
 import { Ionicons } from '@expo/vector-icons';
+import { useAcessibilidade } from '../controls/GerenciadorAcessibilidade';
 
 export default function TelaCarteirinha() {
+    const { modoNavegacaoAmpliada } = useAcessibilidade();
     const router = useRouter();
     const { usuarioLogado } = useUsuario();
     const cart = usuarioLogado?.carteirinha || usuarioLogado?._carteirinha;
@@ -35,7 +37,7 @@ export default function TelaCarteirinha() {
                 <View style={styles.qrCard}>
                     <QRCode
                         value={valorQrCode}
-                        size={220}
+                        size={modoNavegacaoAmpliada ? 300 : 200}
                         color="black"
                         backgroundColor="white"
                     />

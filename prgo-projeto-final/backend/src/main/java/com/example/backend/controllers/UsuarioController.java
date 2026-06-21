@@ -45,7 +45,9 @@ public class UsuarioController {
                     usuario.setTelefone(usuarioAtualizado.getTelefone());
                     usuario.setLogin(usuarioAtualizado.getLogin());
                     usuario.setSenha(usuarioAtualizado.getSenha());
-                    usuario.setIsento(usuarioAtualizado.getIsento());
+                    if (usuarioAtualizado.getIsento() != null) {
+                        usuario.setIsento(usuarioAtualizado.getIsento());
+                    }
                     usuario.setFotoPerfil(usuarioAtualizado.getFotoPerfil());
 
                     Usuario atualizado = repository.save(usuario);
@@ -83,9 +85,13 @@ public class UsuarioController {
     }
 
     @PatchMapping("/{id}/recarga")
-    public ResponseEntity<Usuario> recarregar(@PathVariable Long id, @RequestBody RecargaRequest request) {
+    public ResponseEntity<?> recarregar(@PathVariable Long id, @RequestBody RecargaRequest request) {
         return repository.findById(id)
                 .map(usuario -> {
+                    if (usuario.getIsento() != null && usuario.getIsento()) {
+                        return ResponseEntity.status(400)
+                                .body("Operação bloqueada: Usuários isentos possuem passe livre e não recarregam saldo.");
+                    }
                     if (usuario.getCarteirinha() == null) {
                         Carteirinha novaCarteirinha = new Carteirinha();
                         novaCarteirinha.setSaldo(0.0);

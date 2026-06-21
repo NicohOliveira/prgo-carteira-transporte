@@ -1,1 +1,1 @@
-export const API_URL = 'https://blue-results-walk.loca.lt/api';
+export const API_URL = 'https://mean-gifts-lay.loca.lt/api';

@@ -30,7 +30,7 @@ public class Usuario {
     @Column(columnDefinition = "boolean default false")
     private Boolean isento = false;
 
-    @OneToOne(mappedBy = "usuario", cascade = CascadeType.ALL)
+    @OneToOne(mappedBy = "usuario", cascade = CascadeType.ALL, orphanRemoval = true)
     private Carteirinha carteirinha;
 
     @Column(columnDefinition = "TEXT")
