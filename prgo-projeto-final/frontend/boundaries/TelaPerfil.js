@@ -4,6 +4,8 @@ import { useRouter } from 'expo-router';
 import { useUsuario } from '../controls/GerenciadorUsuario';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
+import * as Print from 'expo-print';
+import * as Sharing from 'expo-sharing';
 
 export default function TelaPerfil() {
     const router = useRouter();
@@ -45,7 +47,6 @@ export default function TelaPerfil() {
 
     const handleSalvar = async () => {
         setCarregando(true);
-        // Como é uma requisição ao servidor, precisamos do 'await'
         const sucesso = await solicitarAtualizacao({ nome, telefone, fotoPerfil });
         setCarregando(false);
 
@@ -53,6 +54,89 @@ export default function TelaPerfil() {
             Alert.alert("Sucesso", "Dados e foto atualizados com sucesso!");
         } else {
             Alert.alert("Erro", "Ocorreu um problema ao salvar os dados.");
+        }
+    };
+
+    const imprimirPasse = async () => {
+        setCarregando(true);
+        try {
+            const cpfUsuario = usuarioLogado?.cpf || usuarioLogado?._cpf || '000.000.000-00';
+            const nomeReal = usuarioLogado?.nome || usuarioLogado?._nome || 'Passageiro';
+            const isento = usuarioLogado?.isento ?? usuarioLogado?._isento ?? false;
+            const valorQrCode = cpfUsuario !== '000.000.000-00' ? `QR_${cpfUsuario}` : "QR_ERRO_000";
+            const tipoTarifa = isento ? "PASSE LIVRE (ISENTO)" : "TARIFA COMUM";
+
+            const fotoSrc = usuarioLogado?.fotoPerfil || "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png";
+
+            const htmlContent = `
+        <html>
+          <head>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no" />
+            <style>
+              body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; display: flex; justify-content: center; align-items: center; padding: 20px; background-color: #ececec; }
+              .carteirinha { 
+                background-color: white; 
+                width: 320px; 
+                border-radius: 15px; 
+                overflow: hidden; 
+                box-shadow: 0 4px 8px rgba(0,0,0,0.2); 
+                text-align: center;
+                border: 2px solid #008c45;
+              }
+              .header { background-color: #008c45; color: white; padding: 15px 0; font-size: 20px; font-weight: bold; letter-spacing: 1px; }
+              .foto-container { margin-top: 20px; }
+              .foto { width: 120px; height: 120px; border-radius: 60px; border: 4px solid #008c45; object-fit: cover; }
+              .dados { padding: 10px 20px; text-align: left; }
+              .nome { font-size: 22px; font-weight: bold; color: #333; margin: 10px 0 5px 0; text-align: center; }
+              .info { font-size: 14px; color: #555; margin: 5px 0; border-bottom: 1px solid #eee; padding-bottom: 5px; }
+              .tarifa-badge { background-color: ${isento ? '#008c45' : '#333'}; color: white; padding: 8px; border-radius: 5px; font-weight: bold; font-size: 14px; margin: 15px auto; width: 80%; text-align: center; }
+              .qr-container { padding: 20px; background-color: #f9f9f9; border-top: 1px dashed #ccc; }
+              .qr-code { width: 180px; height: 180px; }
+              .rodape { font-size: 10px; color: #999; padding: 10px; }
+            </style>
+          </head>
+          <body>
+            <div class="carteirinha">
+              <div class="header">PRGO - TRANSPORTE</div>
+              
+              <div class="foto-container">
+                <img src="${fotoSrc}" class="foto" />
+              </div>
+              
+              <div class="nome">${nomeReal}</div>
+              
+              <div class="dados">
+                <div class="info"><strong>CPF:</strong> ${cpfUsuario}</div>
+              </div>
+              
+              <div class="tarifa-badge">${tipoTarifa}</div>
+              
+              <div class="qr-container">
+                <img src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${valorQrCode}" class="qr-code" />
+              </div>
+              
+              <div class="rodape">Documento Oficial PRGO - Válido para leitura em catracas.</div>
+            </div>
+          </body>
+        </html>
+      `;
+
+            const { uri } = await Print.printToFileAsync({
+                html: htmlContent,
+                base64: false
+            });
+
+            await Sharing.shareAsync(uri, {
+                mimeType: 'application/pdf',
+                dialogTitle: 'A sua Carteirinha PRGO',
+                UTI: 'com.adobe.pdf'
+            });
+
+        } catch (erro) {
+            console.error(erro);
+            Alert.alert('Erro', 'Não foi possível gerar a carteirinha.');
+        } finally {
+            setCarregando(false);
         }
     };
 
@@ -123,6 +207,12 @@ export default function TelaPerfil() {
                     <Text style={styles.btnText}>Salvar Dados</Text>
                 </TouchableOpacity>
 
+
+                <TouchableOpacity style={styles.btnImprimir} onPress={imprimirPasse} disabled={carregando}>
+                    <Ionicons name="print-outline" size={20} color="#008c45" style={{ marginRight: 10 }} />
+                    <Text style={styles.btnImprimirText}>Imprimir Passe (PDF)</Text>
+                </TouchableOpacity>
+
                 <TouchableOpacity style={styles.btnDelete} onPress={clicarExcluirConta} disabled={carregando}>
                     <Text style={styles.btnDeleteText}>Excluir Conta</Text>
                 </TouchableOpacity>
@@ -135,6 +225,7 @@ export default function TelaPerfil() {
                     <Text style={styles.textoCarregando}>A processar operação...</Text>
                 </View>
             )}
+
         </View>
     );
 }
@@ -160,5 +251,7 @@ const styles = StyleSheet.create({
     btnDeleteText: { color: 'red', fontWeight: 'bold' },
 
     overlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0, 0, 0, 0.7)', justifyContent: 'center', alignItems: 'center', zIndex: 999 },
-    textoCarregando: { color: '#fff', fontSize: 16, fontWeight: 'bold', marginTop: 15 }
+    textoCarregando: { color: '#fff', fontSize: 16, fontWeight: 'bold', marginTop: 15 },
+    btnImprimir: { flexDirection: 'row', backgroundColor: '#fff', padding: 15, borderRadius: 10, alignItems: 'center', justifyContent: 'center', marginTop: 15, borderWidth: 2, borderColor: '#008c45' },
+    btnImprimirText: { color: '#008c45', fontWeight: 'bold', fontSize: 16 }
 });
