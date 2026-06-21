@@ -44,7 +44,16 @@ export const GerenciadorUsuarioProvider = ({ children }) => {
     const solicitarAtualizacao = async (novosDados) => {
         if (!usuarioLogado || !usuarioLogado.id) return false;
 
-        const payload = { ...novosDados };
+        const payload = {
+            nome: novosDados.nome ?? usuarioLogado._nome ?? usuarioLogado.nome,
+            idade: usuarioLogado._idade ?? usuarioLogado.idade,
+            cpf: usuarioLogado._cpf ?? usuarioLogado.cpf,
+            telefone: novosDados.telefone ?? usuarioLogado._telefone ?? usuarioLogado.telefone,
+            login: usuarioLogado._login ?? usuarioLogado.login,
+            senha: usuarioLogado._senha ?? usuarioLogado.senha,
+            isento: usuarioLogado._isento ?? usuarioLogado.isento ?? false,
+            fotoPerfil: novosDados.fotoPerfil ?? usuarioLogado.fotoPerfil
+        };
 
         try {
             const resposta = await fetch(`${API_URL}/usuarios/${usuarioLogado.id}`, {

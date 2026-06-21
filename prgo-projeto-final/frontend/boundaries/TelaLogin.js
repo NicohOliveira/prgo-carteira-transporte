@@ -1,13 +1,17 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator} from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAutenticador } from '../controls/Autenticador';
 import { useUsuario } from '../controls/GerenciadorUsuario';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import Ionicons from '@expo/vector-icons/Ionicons';
+
 
 export default function TelaLogin() {
   const router = useRouter();
   const { validarAcesso } = useAutenticador();
-  const { usuarioLogado } = useUsuario();
+
+  const { usuarioLogado, setUsuarioLogado } = useUsuario();
 
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
@@ -19,13 +23,33 @@ export default function TelaLogin() {
       return;
     }
     setCarregando(true);
-    // agr o react aguarda a verificação (que vai bater no back-end)
     const sucesso = await validarAcesso(email, senha);
     setCarregando(false);
+
     if (sucesso) {
       router.replace('/menu');
     } else {
       Alert.alert("Erro", "Credenciais inválidas ou servidor indisponível.");
+    }
+  };
+
+  const handleAcessoRapido = async () => {
+    if (usuarioLogado) {
+      router.push('/carteirinha');
+      return;
+    }
+
+    try {
+      const usuarioSalvo = await AsyncStorage.getItem('@usuario_offline');
+      if (usuarioSalvo) {
+        const dadosUsuario = JSON.parse(usuarioSalvo);
+        setUsuarioLogado(dadosUsuario);
+        router.push('/carteirinha');
+      } else {
+        Alert.alert("Aviso", "Nenhuma conta registada. Por favor, ligue-se à internet e faça login pelo menos uma vez.");
+      }
+    } catch (erro) {
+      Alert.alert("Erro", "Falha ao acessar à memória.");
     }
   };
 
@@ -74,25 +98,27 @@ export default function TelaLogin() {
 
           <TouchableOpacity
               style={styles.buttonOutline}
-              onPress={() => {
-                if (usuarioLogado) {
-                  router.push('/carteirinha');
-                } else {
-                  Alert.alert("Aviso", "Nenhuma conta registrada. Faça um cadastro primeiro para usar o acesso rápido.");
-                }
-              }}
+              onPress={handleAcessoRapido}
           >
             <Text style={styles.buttonOutlineText}>Acessar Carteirinha QR</Text>
           </TouchableOpacity>
         </View>
+
         {carregando && (
             <View style={styles.overlay}>
               <ActivityIndicator size="large" color="#fff" />
-              <Text style={styles.textoCarregando}>Conectando ao servidor...</Text>
+              <Text style={styles.textoCarregando}>A conectar ao servidor...</Text>
             </View>
-            )}
+        )}
+        <TouchableOpacity
+            style={{ marginTop: 20 }}
+            onPress={() => router.push('/catraca')}
+        >
+          <Text style={{ color: '#666', fontWeight: 'bold' }}>
+            <Ionicons name="scan" size={16} /> Entrar como Catraca (Teste)
+          </Text>
+        </TouchableOpacity>
       </View>
-
   );
 }
 
@@ -108,29 +134,8 @@ const styles = StyleSheet.create({
   buttonText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
   footerText: { marginTop: 20, color: '#333', marginBottom: 20 },
   link: { color: '#008c45', fontWeight: 'bold' },
-  buttonOutline: {
-    width: '100%',
-    height: 50,
-    borderWidth: 2,
-    borderColor: '#008c45',
-    borderRadius: 25,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 20
-  },
+  buttonOutline: { width: '100%', height: 50, borderWidth: 2, borderColor: '#008c45', borderRadius: 25, justifyContent: 'center', alignItems: 'center', marginTop: 20 },
   buttonOutlineText: { color: '#008c45', fontSize: 16, fontWeight: 'bold' },
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 999,
-    elevation: 10,
-  },
-  textoCarregando: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginTop: 15,
-  }
+  overlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0, 0, 0, 0.6)', justifyContent: 'center', alignItems: 'center', zIndex: 999, elevation: 10 },
+  textoCarregando: { color: '#fff', fontSize: 16, fontWeight: 'bold', marginTop: 15 }
 });

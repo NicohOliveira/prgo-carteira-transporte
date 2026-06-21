@@ -3,6 +3,7 @@ import { useUsuario } from './GerenciadorUsuario';
 import { API_URL } from '../constants/api';
 import Usuario from '../entities/Usuario';
 import Carteirinha from '../entities/Carteirinha';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export const AutenticadorContext = createContext();
 
@@ -51,7 +52,10 @@ export const AutenticadorProvider = ({ children }) => {
 
       usuarioAutenticado.id = dadosUsuario.id;
 
+      usuarioAutenticado.fotoPerfil = dadosUsuario.fotoPerfil;
+
       setUsuarioLogado(usuarioAutenticado);
+      await AsyncStorage.setItem('@usuario_offline', JSON.stringify(usuarioAutenticado));
       setSessaoAtiva(true);
       return true;
 
@@ -64,6 +68,7 @@ export const AutenticadorProvider = ({ children }) => {
   const finalizarSessao = () => {
     setUsuarioLogado(null);
     setSessaoAtiva(false);
+    AsyncStorage.removeItem('@usuario_offline');
   };
 
   return (

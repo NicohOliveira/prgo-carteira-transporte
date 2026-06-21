@@ -46,6 +46,7 @@ public class UsuarioController {
                     usuario.setLogin(usuarioAtualizado.getLogin());
                     usuario.setSenha(usuarioAtualizado.getSenha());
                     usuario.setIsento(usuarioAtualizado.getIsento());
+                    usuario.setFotoPerfil(usuarioAtualizado.getFotoPerfil());
 
                     Usuario atualizado = repository.save(usuario);
                     return ResponseEntity.ok(atualizado);
@@ -104,6 +105,32 @@ public class UsuarioController {
         private Double valor;
         public Double getValor() { return valor; }
         public void setValor(Double valor) { this.valor = valor; }
+    }
+
+    @PostMapping("/catraca/validar")
+    public ResponseEntity<String> validarCatraca(@RequestBody String codigoQrLido) {
+        String codigoLimpo = codigoQrLido.replace("\"", "").trim();
+        List<Usuario> todosUsuarios = repository.findAll();
+
+        for (Usuario u : todosUsuarios) {
+            if (u.getCarteirinha() != null && codigoLimpo.equals(u.getCarteirinha().getCodigoQr())) {
+                if (u.getIsento() != null && u.getIsento()) {
+                    return ResponseEntity.ok("PASSAGEM LIBERADA (Isento)");
+                }
+                double saldoAtual = u.getCarteirinha().getSaldo();
+                double valorPassagem = 5.00;
+
+                if (saldoAtual >= valorPassagem) {
+                    u.getCarteirinha().setSaldo(saldoAtual - valorPassagem);
+                    repository.save(u); // Desconta e salva!
+                    return ResponseEntity.ok("PASSAGEM LIBERADA (Saldo restante: R$ " + (saldoAtual - valorPassagem) + ")");
+                } else {
+                    return ResponseEntity.status(400).body("SALDO INSUFICIENTE");
+                }
+            }
+        }
+
+        return ResponseEntity.status(404).body("CARTEIRINHA NÃO ENCONTRADA");
     }
 }
 

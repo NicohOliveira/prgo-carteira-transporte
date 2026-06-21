@@ -33,6 +33,9 @@ public class Usuario {
     @OneToOne(mappedBy = "usuario", cascade = CascadeType.ALL)
     private Carteirinha carteirinha;
 
+    @Column(columnDefinition = "TEXT")
+    private String fotoPerfil;
+
     public Usuario() {
     }
 
@@ -74,4 +77,7 @@ public class Usuario {
 
     public Carteirinha getCarteirinha() { return carteirinha; }
     public void setCarteirinha(Carteirinha carteirinha) { this.carteirinha = carteirinha; }
+    public String getFotoPerfil() { return fotoPerfil; }
+    public void setFotoPerfil(String fotoPerfil) { this.fotoPerfil = fotoPerfil; }
+
 }
