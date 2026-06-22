@@ -35,6 +35,13 @@ public class UsuarioController {
         return ResponseEntity.ok(usuarios);
     }
 
+    @GetMapping("/cpf/{cpf}")
+    public ResponseEntity<Usuario> buscarPorCpf(@PathVariable String cpf) {
+        return repository.findByCpf(cpf)
+                .map(usuario -> ResponseEntity.ok(usuario))
+                .orElse(ResponseEntity.notFound().build());
+    }
+
     @PutMapping("/{id}")
     public ResponseEntity<Usuario> atualizar(@PathVariable Long id, @RequestBody Usuario usuarioAtualizado) {
         return repository.findById(id)
@@ -128,7 +135,7 @@ public class UsuarioController {
 
                 if (saldoAtual >= valorPassagem) {
                     u.getCarteirinha().setSaldo(saldoAtual - valorPassagem);
-                    repository.save(u); // Desconta e salva!
+                    repository.save(u);
                     return ResponseEntity.ok("PASSAGEM LIBERADA (Saldo restante: R$ " + (saldoAtual - valorPassagem) + ")");
                 } else {
                     return ResponseEntity.status(400).body("SALDO INSUFICIENTE");

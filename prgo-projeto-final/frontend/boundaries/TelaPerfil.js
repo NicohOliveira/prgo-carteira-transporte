@@ -202,7 +202,7 @@ export default function TelaPerfil() {
                         <Switch
                             trackColor={{ false: "#767577", true: "#81b0ff" }}
                             thumbColor={modoNavegacaoAmpliada ? "#008c45" : "#f4f3f4"}
-                            onValueChange={toggleNavegacaoAmpliada} 
+                            onValueChange={toggleNavegacaoAmpliada}
                             value={modoNavegacaoAmpliada}
                         />
                     </View>

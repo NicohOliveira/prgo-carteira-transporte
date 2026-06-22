@@ -117,7 +117,13 @@ export default function TelaLogin() {
           <Text style={{ color: '#666', fontWeight: 'bold' }}>
             <Ionicons name="scan" size={16} /> Entrar como Catraca (Teste)
           </Text>
+
         </TouchableOpacity>
+        <TouchableOpacity onPress={() => router.push('/admin')} style={styles.botaoRodape}>
+          <Ionicons name="desktop-outline" size={24} color="#555" />
+          <Text style={styles.textoRodape}>Painel Admin</Text>
+        </TouchableOpacity>
+
       </View>
   );
 }

@@ -36,6 +36,9 @@ public class Usuario {
     @Column(columnDefinition = "TEXT")
     private String fotoPerfil;
 
+    @Column(columnDefinition = "boolean default false")
+    private Boolean admin = false;
+
     public Usuario() {
     }
 
@@ -79,5 +82,8 @@ public class Usuario {
     public void setCarteirinha(Carteirinha carteirinha) { this.carteirinha = carteirinha; }
     public String getFotoPerfil() { return fotoPerfil; }
     public void setFotoPerfil(String fotoPerfil) { this.fotoPerfil = fotoPerfil; }
+
+    public Boolean getAdmin() { return admin; }
+    public void setAdmin(Boolean admin) { this.admin = admin; }
 
 }
