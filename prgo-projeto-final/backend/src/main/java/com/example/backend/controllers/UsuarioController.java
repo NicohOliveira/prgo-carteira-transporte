@@ -5,6 +5,12 @@ import com.example.backend.entities.Carteirinha;
 import com.example.backend.repositories.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import java.util.HashMap;
+import java.util.Map;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -136,7 +142,24 @@ public class UsuarioController {
                 if (saldoAtual >= valorPassagem) {
                     u.getCarteirinha().setSaldo(saldoAtual - valorPassagem);
                     repository.save(u);
-                    return ResponseEntity.ok("PASSAGEM LIBERADA (Saldo restante: R$ " + (saldoAtual - valorPassagem) + ")");
+                    
+                    // NOTIFICAÇÕES: Verifica se o saldo caiu abaixo do limite configurado
+                    double novoSaldo = u.getCarteirinha().getSaldo();
+                    if (u.getLimiteNotificacao() != null && novoSaldo <= u.getLimiteNotificacao()) {
+                        System.out.println("==================================================");
+                        System.out.println("ALERTA: O saldo de " + u.getNome() + " caiu para R$ " + novoSaldo);
+                        System.out.println("Disparando Push Notification para o aparelho...");
+                        System.out.println("==================================================");
+                        
+                        // NOTIFICAÇÕES: Dispara o push notification para o celular usando o Token salvo
+                        enviarNotificacaoPush(u.getExpoPushToken(), "Saldo Baixo", 
+                            String.format("Seu saldo atingiu o limite configurado. Saldo atual: R$ %.2f", novoSaldo));
+
+                        // Adiciona tag para o frontend simular o push
+                        return ResponseEntity.ok("PASSAGEM LIBERADA (Saldo restante: R$ " + novoSaldo + ") [LIMITE_ATINGIDO]");
+                    }
+                    
+                    return ResponseEntity.ok("PASSAGEM LIBERADA (Saldo restante: R$ " + novoSaldo + ")");
                 } else {
                     return ResponseEntity.status(400).body("SALDO INSUFICIENTE");
                 }
@@ -144,6 +167,51 @@ public class UsuarioController {
         }
 
         return ResponseEntity.status(404).body("CARTEIRINHA NÃO ENCONTRADA");
+    }
+
+    // NOTIFICAÇÕES: Rota para o celular enviar e salvar o Push Token logo após o login
+    @PatchMapping("/{id}/push-token")
+    public ResponseEntity<?> atualizarPushToken(@PathVariable Long id, @RequestBody Map<String, String> payload) {
+        return repository.findById(id)
+                .map(usuario -> {
+                    usuario.setExpoPushToken(payload.get("token"));
+                    repository.save(usuario);
+                    return ResponseEntity.ok().build();
+                })
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    // NOTIFICAÇÕES: Rota para a tela de configurações salvar o Limite de Saldo desejado
+    @PatchMapping("/{id}/limite-notificacao")
+    public ResponseEntity<?> atualizarLimiteNotificacao(@PathVariable Long id, @RequestBody Map<String, Double> payload) {
+        return repository.findById(id)
+                .map(usuario -> {
+                    usuario.setLimiteNotificacao(payload.get("limite"));
+                    repository.save(usuario);
+                    return ResponseEntity.ok().build();
+                })
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    // NOTIFICAÇÕES: Função interna que faz a requisição HTTP real para a API do Expo enviar o Push
+    private void enviarNotificacaoPush(String token, String titulo, String mensagem) {
+        if (token == null || token.isEmpty()) return;
+
+        try {
+            RestTemplate restTemplate = new RestTemplate();
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+
+            Map<String, String> body = new HashMap<>();
+            body.put("to", token);
+            body.put("title", titulo);
+            body.put("body", mensagem);
+
+            HttpEntity<Map<String, String>> request = new HttpEntity<>(body, headers);
+            restTemplate.postForObject("https://exp.host/--/api/v2/push/send", request, String.class);
+        } catch (Exception e) {
+            System.err.println("Erro ao enviar notificação push: " + e.getMessage());
+        }
     }
 }
 
