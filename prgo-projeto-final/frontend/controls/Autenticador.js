@@ -1,5 +1,6 @@
 import React, { createContext, useState, useContext } from 'react';
 import { useUsuario } from './GerenciadorUsuario';
+import { usePushNotifications } from '../hooks/usePushNotifications';
 import { API_URL } from '../constants/api';
 import Usuario from '../entities/Usuario';
 import Carteirinha from '../entities/Carteirinha';
@@ -10,6 +11,8 @@ export const AutenticadorContext = createContext();
 export const AutenticadorProvider = ({ children }) => {
   const { setUsuarioLogado } = useUsuario();
   const [sessaoAtiva, setSessaoAtiva] = useState(false);
+  // NOTIFICAÇÕES: Importa o hook para ter acesso ao token do aparelho
+  const { expoPushToken } = usePushNotifications();
 
   const validarAcesso = async (login, senha) => {
     try {
@@ -47,7 +50,7 @@ export const AutenticadorProvider = ({ children }) => {
           dadosUsuario.login,
           dadosUsuario.senha,
           carteirinhaDoBanco,
-          dadosUsuario.isento || false
+          dadosUsuario.limiteNotificacao || 0
       );
 
       usuarioAutenticado.id = dadosUsuario.id;
@@ -59,6 +62,20 @@ export const AutenticadorProvider = ({ children }) => {
       setUsuarioLogado(usuarioAutenticado);
       await AsyncStorage.setItem('@usuario_offline', JSON.stringify(usuarioAutenticado));
       setSessaoAtiva(true);
+
+      // Envia o push token para o backend
+      // NOTIFICAÇÕES: Se fez login com sucesso e gerou um token, envia o token pro backend
+      if (expoPushToken) {
+        fetch(`${API_URL}/usuarios/${usuarioAutenticado.id}/push-token`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'Bypass-Tunnel-Reminder': 'true'
+          },
+          body: JSON.stringify({ token: expoPushToken }),
+        }).catch(err => console.log('Erro ao enviar push token: ', err));
+      }
+
       return true;
 
     } catch (erro) {

@@ -94,13 +94,44 @@ export const GerenciadorUsuarioProvider = ({ children }) => {
         }
     };
 
+    // NOTIFICAÇÕES: Função para enviar o novo limite configurado pelo usuário para o backend
+    const atualizarLimiteNotificacao = async (novoLimite) => {
+        if (!usuarioLogado || !usuarioLogado.id) return false;
+
+        try {
+            const resposta = await fetch(`${API_URL}/usuarios/${usuarioLogado.id}/limite-notificacao`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Bypass-Tunnel-Reminder': 'true'
+                },
+                body: JSON.stringify({ limite: parseFloat(novoLimite) })
+            });
+
+            if (!resposta.ok) return false;
+
+            // Atualiza o contexto local mantendo a estrutura da classe
+            setUsuarioLogado(prev => {
+                const clone = Object.assign(Object.create(Object.getPrototypeOf(prev)), prev);
+                clone.limiteNotificacao = parseFloat(novoLimite);
+                clone._limiteNotificacao = parseFloat(novoLimite);
+                return clone;
+            });
+            return true;
+        } catch (erro) {
+            console.error("Erro ao atualizar limite:", erro);
+            return false;
+        }
+    };
+
     return (
         <UsuarioContext.Provider value={{
             usuarioLogado,
             setUsuarioLogado,
             solicitarCadastro,
             solicitarAtualizacao,
-            solicitarExclusao
+            solicitarExclusao,
+            atualizarLimiteNotificacao
         }}>
             {children}
         </UsuarioContext.Provider>
