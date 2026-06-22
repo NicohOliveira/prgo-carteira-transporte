@@ -39,6 +39,14 @@ public class Usuario {
     @Column(columnDefinition = "boolean default false")
     private Boolean admin = false;
 
+    @Column(columnDefinition = "TEXT")
+    // NOTIFICAÇÕES: Token único do aparelho Expo para enviar mensagens push
+    private String expoPushToken;
+
+    @Column(columnDefinition = "DOUBLE PRECISION")
+    // NOTIFICAÇÕES: Limite de saldo configurado pelo usuário para disparar o aviso
+    private Double limiteNotificacao;
+
     public Usuario() {
     }
 
@@ -85,5 +93,11 @@ public class Usuario {
 
     public Boolean getAdmin() { return admin; }
     public void setAdmin(Boolean admin) { this.admin = admin; }
+
+    public String getExpoPushToken() { return expoPushToken; }
+    public void setExpoPushToken(String expoPushToken) { this.expoPushToken = expoPushToken; }
+
+    public Double getLimiteNotificacao() { return limiteNotificacao; }
+    public void setLimiteNotificacao(Double limiteNotificacao) { this.limiteNotificacao = limiteNotificacao; }
 
 }
