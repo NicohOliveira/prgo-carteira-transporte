@@ -45,8 +45,12 @@ export default function TelaPagamentoPix() {
                 setUsuarioLogado(prev => {
                     const clone = Object.assign(Object.create(Object.getPrototypeOf(prev)), prev);
                     if (clone.carteirinha || clone._carteirinha) {
-                        const cart = clone.carteirinha || clone._carteirinha;
-                        cart.saldo = usuarioAtualizadoBanco.carteirinha.saldo;
+                        const cartAnterior = clone.carteirinha || clone._carteirinha;
+                        // Cria uma nova instância de carteirinha para o React detectar a mudança
+                        const novaCarteirinha = Object.assign(Object.create(Object.getPrototypeOf(cartAnterior)), cartAnterior);
+                        novaCarteirinha.saldo = usuarioAtualizadoBanco.carteirinha.saldo;
+                        clone.carteirinha = novaCarteirinha;
+                        clone._carteirinha = novaCarteirinha;
                     }
                     return clone;
                 });

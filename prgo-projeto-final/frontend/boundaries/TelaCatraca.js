@@ -43,9 +43,19 @@ export default function TelaCatraca() {
                 body: data
             });
 
-            const textoDaCatraca = await resposta.text();
+            let textoDaCatraca = await resposta.text();
 
             if (resposta.ok) {
+                if (textoDaCatraca.includes("[LIMITE_ATINGIDO]")) {
+                    textoDaCatraca = textoDaCatraca.replace(" [LIMITE_ATINGIDO]", "");
+                    // Dispara a nossa notificação falsa local!
+                    import('react-native').then(({ Alert }) => {
+                        Alert.alert(
+                            "🔔 NOTIFICAÇÃO DO SISTEMA", 
+                            "Saldo Baixo! Seu saldo atingiu o limite configurado para avisos."
+                        );
+                    });
+                }
                 setCorFundo('#008c45');
                 setMensagem(textoDaCatraca);
             } else {

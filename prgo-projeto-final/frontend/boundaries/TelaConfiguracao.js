@@ -6,15 +6,19 @@ import { Ionicons } from '@expo/vector-icons';
 
 export default function TelaConfiguracao() {
   const router = useRouter();
-  const { usuarioLogado, solicitarAtualizacao } = useUsuario();
+  const { usuarioLogado, atualizarLimiteNotificacao } = useUsuario();
   const [limite, setLimite] = useState(usuarioLogado?.limiteNotificacao?.toString() || '0');
-
 
   const exibirMensagemSucesso = () => Alert.alert("Sucesso", "Limite atualizado!");
 
-  const informarNovoLimite = () => {
-    const sucesso = solicitarAtualizacao({ limiteNotificacao: parseFloat(limite) });
-    if (sucesso) exibirMensagemSucesso();
+  const salvarConfiguracoes = async () => {
+    // NOTIFICAÇÕES: Chama a função no GerenciadorUsuario para salvar o limite no banco de dados também
+    const sucesso = await atualizarLimiteNotificacao(limite);
+    if (sucesso) {
+      exibirMensagemSucesso();
+    } else {
+      Alert.alert("Erro", "Não foi possível atualizar o limite.");
+    }
   };
 
   return (
@@ -33,7 +37,7 @@ export default function TelaConfiguracao() {
           value={limite}
           onChangeText={setLimite}
         />
-        <TouchableOpacity style={styles.btnVerde} onPress={informarNovoLimite}>
+        <TouchableOpacity style={styles.btnVerde} onPress={salvarConfiguracoes}>
           <Text style={styles.btnText}>Salvar Limite</Text>
         </TouchableOpacity>
       </View>
