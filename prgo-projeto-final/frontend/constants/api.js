@@ -1,1 +1,1 @@
-export const API_URL = 'https://mean-gifts-lay.loca.lt/api';
+export const API_URL = 'http://192.168.0.8:8081/api';
