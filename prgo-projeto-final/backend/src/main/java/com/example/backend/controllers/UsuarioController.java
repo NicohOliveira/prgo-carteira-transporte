@@ -53,6 +53,13 @@ public class UsuarioController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<Usuario> buscarPorId(@PathVariable Long id) {
+        return repository.findById(id)
+                .map(usuario -> ResponseEntity.ok(usuario))
+                .orElse(ResponseEntity.notFound().build());
+    }
+
     @PutMapping("/{id}")
     public ResponseEntity<Usuario> atualizar(@PathVariable Long id, @RequestBody Usuario usuarioAtualizado) {
         return repository.findById(id)
@@ -240,6 +247,46 @@ public class UsuarioController {
     public ResponseEntity<List<Pagamento>> buscarHistorico(@PathVariable Long id) {
         List<Pagamento> historico = pagamentoRepository.findByUsuarioIdOrderByDataHoraDesc(id);
         return ResponseEntity.ok(historico);
+    }
+
+    @PostMapping("/{idResponsavel}/dependentes")
+    public ResponseEntity<?> vincularDependente(@PathVariable Long idResponsavel, @RequestBody VinculoDependenteRequest request) {
+        if (request.getCpfDependente() == null || request.getCpfDependente().trim().isEmpty()) {
+            return ResponseEntity.status(400).body("O CPF do dependente é obrigatório.");
+        }
+
+        return repository.findById(idResponsavel)
+                .map(responsavel -> {
+
+                    if (responsavel.getCpf().equals(request.getCpfDependente())) {
+                        return ResponseEntity.status(400).body("Erro: Você não pode ser seu próprio dependente.");
+                    }
+
+                    return repository.findByCpf(request.getCpfDependente())
+                            .map(dependente -> {
+
+                                if (responsavel.getDependentes().contains(dependente)) {
+                                    return ResponseEntity.status(400).body("Este dependente já está vinculado à sua conta.");
+                                }
+
+                                // Nota: Como é um relacionamento bidirecional, adicionamos nos dois lados para garantir a consistência em memória
+                                responsavel.getDependentes().add(dependente);
+                                dependente.getResponsaveis().add(responsavel);
+
+                                repository.save(responsavel);
+
+                                return ResponseEntity.ok().body("Dependente vinculado com sucesso!");
+                            })
+                            .orElse(ResponseEntity.status(404).body("Dependente não cadastrado no sistema. Verifique o CPF."));
+                })
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    public static class VinculoDependenteRequest {
+        private String cpfDependente;
+
+        public String getCpfDependente() { return cpfDependente; }
+        public void setCpfDependente(String cpfDependente) { this.cpfDependente = cpfDependente; }
     }
 }
 

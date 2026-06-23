@@ -1,8 +1,11 @@
 package com.example.backend.entities;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.*;
-
-
 
 @Entity
 @Table(name = "usuarios")
@@ -49,7 +52,17 @@ public class Usuario {
     // NOTIFICAÇÕES: Limite de saldo configurado pelo usuário para disparar o aviso
     private Double limiteNotificacao;
 
+    @ManyToMany
+    @JoinTable(
+        name = "usuario_responsavel_dependente",
+        joinColumns = @JoinColumn(name = "dependente_id"),
+        inverseJoinColumns = @JoinColumn(name = "responsavel_id")
+    )
+    @JsonIgnore
+    private List<Usuario> responsaveis = new ArrayList<>();
 
+    @ManyToMany(mappedBy = "responsaveis")
+    private List<Usuario> dependentes = new ArrayList<>();
 
     public Usuario() {
     }
@@ -104,5 +117,10 @@ public class Usuario {
     public Double getLimiteNotificacao() { return limiteNotificacao; }
     public void setLimiteNotificacao(Double limiteNotificacao) { this.limiteNotificacao = limiteNotificacao; }
 
-}
+    public List<Usuario> getResponsaveis() { return responsaveis; }
+    public void setResponsaveis(List<Usuario> responsaveis) { this.responsaveis = responsaveis; }
 
+    public List<Usuario> getDependentes() { return dependentes; }
+    public void setDependentes(List<Usuario> dependentes) { this.dependentes = dependentes; }
+
+}
