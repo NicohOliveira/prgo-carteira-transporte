@@ -1,6 +1,8 @@
 package com.example.backend.controllers;
 
 import com.example.backend.entities.Usuario;
+import com.example.backend.entities.Pagamento;
+import com.example.backend.repositories.PagamentoRepository;
 import com.example.backend.entities.Carteirinha;
 import com.example.backend.repositories.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +24,9 @@ public class UsuarioController {
 
     @Autowired
     private UsuarioRepository repository;
+
+    @Autowired
+    private PagamentoRepository pagamentoRepository;
 
     @PostMapping
     public ResponseEntity<Usuario> cadastrar(@RequestBody Usuario usuario) {
@@ -114,6 +119,14 @@ public class UsuarioController {
                     }
                     double saldoAtual = usuario.getCarteirinha().getSaldo();
                     usuario.getCarteirinha().setSaldo(saldoAtual + request.getValor());
+                    Pagamento novaRecarga = new Pagamento();
+
+                    novaRecarga.setValor(request.getValor());
+                    novaRecarga.setMetodo("PIX");
+                    novaRecarga.setStatus("Confirmado");
+                    novaRecarga.setDataHora(java.time.LocalDateTime.now());
+                    novaRecarga.setUsuario(usuario);
+                    pagamentoRepository.save(novaRecarga);
 
                     Usuario atualizado = repository.save(usuario);
                     return ResponseEntity.ok(atualizado);
@@ -141,6 +154,15 @@ public class UsuarioController {
 
                 if (saldoAtual >= valorPassagem) {
                     u.getCarteirinha().setSaldo(saldoAtual - valorPassagem);
+
+                    Pagamento usoCatraca = new Pagamento();
+                    usoCatraca.setValor(-valorPassagem); // Fica -5.00
+                    usoCatraca.setMetodo("Catraca");
+                    usoCatraca.setStatus("Confirmado");
+                    usoCatraca.setDataHora(java.time.LocalDateTime.now());
+                    usoCatraca.setUsuario(u);
+
+                    pagamentoRepository.save(usoCatraca);
                     repository.save(u);
                     
                     // NOTIFICAÇÕES: Verifica se o saldo caiu abaixo do limite configurado
@@ -212,6 +234,12 @@ public class UsuarioController {
         } catch (Exception e) {
             System.err.println("Erro ao enviar notificação push: " + e.getMessage());
         }
+    }
+
+    @GetMapping("/{id}/historico")
+    public ResponseEntity<List<Pagamento>> buscarHistorico(@PathVariable Long id) {
+        List<Pagamento> historico = pagamentoRepository.findByUsuarioIdOrderByDataHoraDesc(id);
+        return ResponseEntity.ok(historico);
     }
 }
 

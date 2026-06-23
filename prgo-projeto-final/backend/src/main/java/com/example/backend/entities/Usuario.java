@@ -2,6 +2,8 @@ package com.example.backend.entities;
 
 import jakarta.persistence.*;
 
+
+
 @Entity
 @Table(name = "usuarios")
 public class Usuario {
@@ -46,6 +48,8 @@ public class Usuario {
     @Column(columnDefinition = "DOUBLE PRECISION")
     // NOTIFICAÇÕES: Limite de saldo configurado pelo usuário para disparar o aviso
     private Double limiteNotificacao;
+
+
 
     public Usuario() {
     }
@@ -101,3 +105,4 @@ public class Usuario {
     public void setLimiteNotificacao(Double limiteNotificacao) { this.limiteNotificacao = limiteNotificacao; }
 
 }
+

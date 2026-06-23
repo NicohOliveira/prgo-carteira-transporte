@@ -1,35 +1,54 @@
-import React from 'react';
+import React, { useEffect} from 'react';
 import { View, Text, FlatList, StyleSheet } from 'react-native';
 import { usePagamento } from '../controls/GerenciadorPagamento';
+import { useUsuario } from '../controls/GerenciadorUsuario';
 
 export default function TelaHistoricoPagamentos() {
     // Consumindo a variável "historico" exportada pelo seu Control autêntico
-    const { historico } = usePagamento();
+    const { historico, buscarHistorico, carregandoHistorico } = usePagamento();
+    const { usuarioLogado } = useUsuario();
 
+    useEffect(() => {
+        if (usuarioLogado && usuarioLogado.id) {
+            buscarHistorico(usuarioLogado.id);
+        }
+    }, []);
     // Formatando a data ISO (ex: 2026-06-21T...) para um formato legível
     const formatarData = (isoString) => {
         const data = new Date(isoString);
         return data.toLocaleDateString('pt-BR') + ' às ' + data.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
     };
 
-    const renderItem = ({ item }) => (
-        <View style={styles.card}>
-            <View style={styles.cardHeader}>
-                <Text style={styles.metodo}>Recarga via {item.metodo}</Text>
-                <Text style={styles.data}>{formatarData(item.dataHora)}</Text>
-            </View>
+    const renderItem = ({ item }) => {
+        const isEntrada = item.valor > 0;
 
-            <View style={styles.cardFooter}>
-                <Text style={[
-                    styles.status,
-                    { color: item.status === 'Confirmado' ? '#2ecc71' : item.status === 'Rejeitado' ? '#e74c3c' : '#f39c12' }
-                ]}>
-                    {item.status}
-                </Text>
-                <Text style={styles.valor}>+ R$ {item.valor.toFixed(2)}</Text>
+
+        return (
+            <View style={styles.card}>
+                <View style={styles.cardHeader}>
+                    <Text style={styles.metodo}>
+                        {isEntrada ? `Recarga via ${item.metodo}` : `Uso na ${item.metodo}`}
+                    </Text>
+                    <Text style={styles.data}>{formatarData(item.dataHora)}</Text>
+                </View>
+
+                <View style={styles.cardFooter}>
+                    <Text style={[
+                        styles.status,
+                        { color: item.status === 'Confirmado' ? '#2ecc71' : item.status === 'Rejeitado' ? '#e74c3c' : '#f39c12' }
+                    ]}>
+                        {item.status}
+                    </Text>
+                    <Text style={[
+                        styles.valor,
+                        { color: isEntrada ? '#2ecc71' : '#e74c3c' } // Verde para entrada, Vermelho para saída
+                    ]}>
+                        {isEntrada ? '+' : ''} R$ {item.valor.toFixed(2).replace('.', ',')}
+                    </Text>
+                </View>
             </View>
-        </View>
-    );
+        );
+    };
 
     return (
         <View style={styles.container}>
@@ -37,8 +56,7 @@ export default function TelaHistoricoPagamentos() {
 
             <FlatList
                 data={historico}
-                // Acessando o ID privado configurado na sua Entidade Pagamento
-                keyExtractor={(item) => item._idPagamento.toString()}
+                keyExtractor={(item, index) => (item._idPagamento || item.id || index).toString()}
                 renderItem={renderItem}
                 contentContainerStyle={styles.listContainer}
                 ListEmptyComponent={
